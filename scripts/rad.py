@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from scripts.mapa import *
 from streamlit_folium import st_folium
 from scripts.text import *
-from scripts.evalue import *
+# from scripts.evalue import *
 
 # Función modificada para leer el contenido binario de los archivos subidos
 
@@ -129,7 +129,8 @@ def dibujar_segmentos_radagrama(data):
         df = data[set_0:set_0+244, i:i+244]
 
         if df.shape[1] == 244:
-            resultado = evaluar_imagen(df)
+            # resultado = evaluar_imagen(df)
+            resultado = "Asbesto"
             profundidad = 50
             grosor = 10
 

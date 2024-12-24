@@ -1,3 +1,11 @@
+streamlit run app.py
+
+install torch 
+
+pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu124
+
+
+
 gcloud builds submit --tag gcr.io/lupz-365519/test-app  --project=lupz-365519
 
 gcloud run deploy --image gcr.io/lupz-365519/test-app --platform managed  --project=lupz-365519 --allow-unauthenticated
