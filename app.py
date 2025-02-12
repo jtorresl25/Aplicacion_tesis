@@ -63,9 +63,11 @@ if st.session_state["rad"] and st.session_state["rd7"]:
         with tempfile.NamedTemporaryFile(delete=False, suffix=".rad") as temp_file_rad:
             temp_file_rad.write(st.session_state["rad"].read())
             rad_path = temp_file_rad.name
+            st.session_state['direccion_rad'] = rad_path
         with tempfile.NamedTemporaryFile(delete=False, suffix=".rd7") as temp_file_rd7:
             temp_file_rd7.write(st.session_state["rd7"].read())
             rd7_path = temp_file_rd7.name
+            st.session_state['direccion_rd7'] = rd7_path
 
     with st.spinner('Cargando radagrama...'):
         mostrar_radagrama(rd7_path, rad_path)

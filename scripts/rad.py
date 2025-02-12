@@ -1,3 +1,4 @@
+from geopy.distance import geodesic
 import os
 import numpy as np
 import streamlit as st
@@ -28,7 +29,7 @@ def readGPRhdr(filename):
     '''
     Reads the MALA header
 
-    INPUT: 
+    INPUT:
     filename      file name for header with .rad extension
 
     OUTPUT:
@@ -56,12 +57,9 @@ def mostrar_radagrama(file_name, file_name_rad):
     contrast = 3.0
     # colores utiles HSV, gray
     color = "gray"
-    print(file_name)
     data_raw = readMALA(file_name, file_name_rad)
     st.session_state['data_raw'] = data_raw
     data = data_raw[0]
-    print(data.shape)
-    print(data)
     # twtt es un array que representa el tiempo en un rango de 0 a y nanosegundos en n "segmentos".
     # Ej: empieza desde cero, aumentando en 0.1955 unidades hasta los 197.65 nanosegundos repartidos en 1012 samples
     twtt = np.linspace(
@@ -119,78 +117,189 @@ def grafico_radagrama(data):
     st.pyplot(fig)
 
 
+def mostrar_radagrama_detecciones(data_raw, segmentos=None, lineas_horizontales=None, lineas_grosores=None):
+    # Configuración inicial
+    xrng = 10
+    yrng = 20
+    contrast = 3.0
+    color = "gray"
+    data = data_raw[0]
+
+    twtt = np.linspace(
+        0, float(data_raw[1]["TIMEWINDOW"]), int(data_raw[1]['SAMPLES']))
+    profilePos = float(data_raw[1]["DISTANCE INTERVAL"]
+                       ) * np.arange(0, data.shape[1])
+    dx = profilePos[3] - profilePos[2]
+    dt = twtt[3] - twtt[2]
+    stdcont = np.nanmax(np.abs(data)[:])
+
+    fig, ax = plt.subplots()
+
+    # Gráfico base
+    img = ax.imshow(data, cmap=color,
+                    extent=[min(profilePos) - dx/2.0,
+                            max(profilePos) + dx/2.0,
+                            max(twtt) + dt/2.0,
+                            min(twtt) - dt/2.0],
+                    aspect="auto",
+                    vmin=-stdcont/contrast,
+                    vmax=stdcont/contrast)
+
+    # Resaltar segmentos y dibujar líneas
+    if segmentos:
+        for i, segmento in enumerate(segmentos):
+            start_col, end_col = segmento
+            inicio = profilePos[start_col]
+            fin = profilePos[end_col]
+
+            # Resaltar área del segmento
+            ax.axvspan(inicio, fin, color='red', alpha=0.3)
+
+            # Dibujar líneas horizontales solo en el segmento
+            if lineas_horizontales and i < len(lineas_horizontales):
+                linea = lineas_horizontales[i]
+                ax.hlines(linea['y'],
+                          xmin=inicio,
+                          xmax=fin,
+                          colors='black',
+                          linestyles='-',
+                          linewidths=2,)
+
+            # Dibujar lineas de grosor solo en el segmento
+            if lineas_grosores and i < len(lineas_grosores):
+                linea = lineas_grosores[i]
+                ax.hlines(linea['x'],
+                          xmin=inicio,
+                          xmax=fin,
+                          colors='White',
+                          linestyles='-',
+                          linewidths=2,
+                          )
+
+    # Configuración de ejes
+    ax.set_ylabel("Tiempo [ns]")
+    ax.set_xlabel("Posición del perfil [m]")
+    ax.xaxis.tick_top()
+    ax.xaxis.set_label_position('top')
+    ax.set_ylim(yrng)
+    ax.set_xlim([min(profilePos), max(profilePos)])
+
+    st.pyplot(fig)
+
+
 def dibujar_segmentos_radagrama(data):
+    # Obtener parámetros de posición desde el header
+    info = st.session_state['data_raw'][1]
+    dx = float(info['DISTANCE INTERVAL'])
+
     length = data.shape[1]
-    # Bucle para dibujar los segmentos en el radagrama, cada uno de 244 columnas
-    for i in range(0, length, 244):
-        # Crear dos columnas
+    tamano_segmento = 44  # Segmento de 44 columnas
+
+    for i in range(0, length, tamano_segmento):
         col1, col2 = st.columns(2)
         set_0 = 5
-        df = data[set_0:set_0+244, i:i+244]
+        df = data[set_0:set_0+120, i:i+tamano_segmento]
 
-        if df.shape[1] == 244:
-            # resultado = evaluar_imagen(df)
+        if df.shape[1] == tamano_segmento:
             resultado = "Asbesto"
             profundidad = 50
             grosor = 10
 
-            # En la primera columna mostrar el gráfico
             with col1:
-                # Crear la figura y los ejes
                 fig, ax = plt.subplots()
-
-                # Mostrar la imagen en los ejes (ax) con los parámetros adecuados
                 img = ax.imshow(df, cmap="gray", aspect="auto")
 
-                # Calcular el intervalo correcto de posiciones en el eje x
-                inicio = i  # Calcula la posición inicial en metros
-                # Calcula la posición final en metros
-                fin = (i + 244)
-                # Establecer las posiciones de las etiquetas en el eje x
-                ax.set_xticks([0, 243])
-                # Etiquetas con valores reales de posición
-                ax.set_xticklabels([f"{inicio:.2f}", f"{fin:.2f}"])
+                # Calcular posiciones reales
+                start_pos = i * dx
+                end_pos = (i + tamano_segmento - 1) * dx
 
-                # Etiquetas de los ejes
+                # Configurar eje X
+                ax.set_xticks([0, tamano_segmento-1])
+                ax.set_xticklabels([f"{start_pos:.2f}", f"{end_pos:.2f}"])
+
                 ax.set_ylabel("Tiempo [ns]")
                 ax.set_xlabel("Posición del perfil [m]")
                 ax.xaxis.tick_top()
                 ax.xaxis.set_label_position('top')
 
-                # Graficar las dos líneas horizontales en la profundidad dada
-                ax.hlines(profundidad, xmin=0, xmax=243, colors='r',
-                          linestyles='-', linewidth=1)
-                ax.hlines(profundidad + grosor, xmin=0, xmax=243,
-                          colors='r', linestyles='-', linewidth=1)
+                # Líneas horizontales
+                ax.hlines(profundidad, xmin=0, xmax=tamano_segmento -
+                          1, colors='r', linewidth=1)
+                ax.hlines(profundidad + grosor, xmin=0,
+                          xmax=tamano_segmento-1, colors='r', linewidth=1)
 
-                # Mostrar la figura en Streamlit
                 st.pyplot(fig)
 
                 if 'df_mapa' in st.session_state:
-
                     df_mapa = st.session_state['df_mapa']
-                    # df mapa toma las filas donde id se encuentra entre inicio y fin
-                    df_mapa = df_mapa[(df_mapa['ID'] >= inicio)
-                                      & (df_mapa['ID'] <= fin)]
-                    # Leer el archivo .cor
-                    folium_map = mostrar_mapa(df_mapa)
-                    # Mostrar el mapa interactivo usando streamlit-folium
-                    st_folium(folium_map, width=400, height=150, key=fin)
+                    df_mapa = df_mapa[(df_mapa['ID'] >= start_pos) & (
+                        df_mapa['ID'] <= end_pos)]
+                    try:
+                        folium_map = mostrar_mapa(df_mapa)
+                        st_folium(folium_map, width=400,
+                                  height=150, key=end_pos)
+                    except:
+                        pass
 
-            # En la segunda columna mostrar el texto (que luego podrás modificar)
             with col2:
+                text_resultados(f"""Tipo de material: {resultado}
+                    Profundidad: {profundidad*0.1:.1f} metros  # Ejemplo de conversión a metros
+                    Grosor de la capa: {grosor*0.1:.1f} metros""")
 
-                text_resultados(
-                    f"""
-            Tipo de material: {resultado}
-            """)
-                text_resultados(
-                    f"""
-            Profundidad: 2 metros
-            """)
-                text_resultados(
-                    f"""
-            Grosor de la capa: 30 cm
-            """)
-            # Separador entre segmentos
             st.markdown("---")
+
+
+def mostrar_mapa_segmentos_detectados(segmentos_detecciones):
+    if 'df_mapa' not in st.session_state or not segmentos_detecciones:
+        return
+
+    df_mapa = st.session_state['df_mapa']
+
+    # Concatenar los segmentos detectados en un único DataFrame
+    df_mapa_final = pd.DataFrame()
+    for segmento in segmentos_detecciones:
+        start_pos = segmento[0]
+        end_pos = segmento[1]
+        df_segmento = df_mapa[(df_mapa['ID'] >= start_pos)
+                              & (df_mapa['ID'] <= end_pos)]
+        df_mapa_final = pd.concat(
+            [df_mapa_final, df_segmento], ignore_index=True)
+
+    # Ordenar el DataFrame por 'ID' para asegurar el orden correcto
+    df_mapa_final = df_mapa_final.sort_values('ID')
+
+    # Centrar el mapa en el promedio de las coordenadas
+    map_center = [df_mapa_final['Latitud'].mean(
+    ), df_mapa_final['Longitud'].mean()]
+    mymap = folium.Map(location=map_center, zoom_start=20)
+
+    # Definir umbral para la diferencia de ID
+    umbral_gap = 100
+
+    # Crear listas de coordenadas e IDs
+    coordinates = list(
+        zip(df_mapa_final['Latitud'], df_mapa_final['Longitud']))
+    ids = list(df_mapa_final['ID'])
+
+    # Dividir los puntos en segmentos basados en la diferencia de IDs
+    segmentos_linea = []
+    segmento_actual = [coordinates[0]]
+
+    for i in range(1, len(coordinates)):
+        # Si la diferencia entre IDs es mayor al umbral, se rompe el segmento
+        if ids[i] - ids[i-1] > umbral_gap:
+            if len(segmento_actual) > 1:
+                segmentos_linea.append(segmento_actual)
+            segmento_actual = [coordinates[i]]
+        else:
+            segmento_actual.append(coordinates[i])
+
+    # Agregar el último segmento si es válido
+    if len(segmento_actual) > 1:
+        segmentos_linea.append(segmento_actual)
+
+    # Dibujar cada segmento en el mapa
+    for seg in segmentos_linea:
+        folium.PolyLine(locations=seg, color='red', weight=5).add_to(mymap)
+
+    st_folium(mymap, width=700, height=400, key="mapa_segmentos_detectados")
