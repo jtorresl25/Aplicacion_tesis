@@ -1,7 +1,7 @@
 from scripts.text import *
 from scripts.mapa import *
 from scripts.rad import *
-from streamlit_folium import st_folium
+from scripts.evalue import *
 
 style()
 
@@ -32,6 +32,7 @@ lineas_grosor = [
     {'x': 15, 'color': 'Blue', 'estilo': '-', 'grosor': 2},
 ]
 
+segmentos_detecciones = evaluar_imagen_completa(st.session_state['data_raw'])
 mostrar_radagrama_detecciones(st.session_state['data_raw'],
                               segmentos=segmentos_detecciones,
                               lineas_horizontales=lineas_profundidad, lineas_grosores=lineas_grosor)

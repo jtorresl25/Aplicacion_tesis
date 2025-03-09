@@ -6,9 +6,9 @@ from streamlit_folium import st_folium
 import streamlit as st
 
 # Rutas predefinidas para los archivos de demo
-path_rad = "statics/DAT_0052_1.rad"
-path_rd7 = "statics/DAT_0052_1.rd7"
-path_mapa = "statics/DAT_0052_1.cor"
+path_rad = "statics/DAT_0020_1.rad"
+path_rd7 = "statics/DAT_0020_1.rd7"
+path_mapa = "statics/DAT_0020_1.cor"
 
 # Inicializar estado de sesión para los archivos
 if "rad" not in st.session_state:
