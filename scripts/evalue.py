@@ -40,7 +40,7 @@ class SimpleCNN(nn.Module):
 def load_model():
     model = SimpleCNN()
     model.load_state_dict(torch.load(
-        "93.pth", map_location="cpu"))
+        "85_1m.pth", map_location="cpu"))
     model.eval()  # Modo evaluación
     return model
 
@@ -51,7 +51,7 @@ model = load_model()
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
-def evaluar_imagen_completa(data, segment_width=88, stride=88):
+def evaluar_imagen_completa(data, segment_width=44, stride=44):
     # Asumimos que data es una lista y tomamos el primer elemento
     data = data[0]
     data = pd.DataFrame(data)
@@ -66,11 +66,9 @@ def evaluar_imagen_completa(data, segment_width=88, stride=88):
 
     # Obtener dimensiones (se espera H = 256)
     _, _, H, W = full_image.shape
-    print("Dimensiones de la imagen completa:", H, W)
 
     # Calcular el número de segmentos a lo largo de las columnas
     n_segments = (W - segment_width) // stride + 1
-    print("Número de segmentos:", n_segments)
 
     predictions = []
     probabilities = []
@@ -92,8 +90,15 @@ def evaluar_imagen_completa(data, segment_width=88, stride=88):
             prob = torch.softmax(output, dim=1)
             _, pred = torch.max(output, 1)
 
-        predictions.append(pred.item())
-        probabilities.append(prob.numpy()[0])
+        # predictions.append(pred.item())
+        # probabilities.append(prob.numpy()[0])
+        # Si la probabilidad de la clase 1 es mayor a 0.7, se considera detección
+        if prob[0, 1] > 0.7:
+            predictions.append(1)
+        else:
+            predictions.append(0)
+        probabilities.append(prob.numpy()[
+                             0])  # Guardar las probabilidades de ambas clases
 
     # Crear una lista de segmentos donde la predicción fue 1.
     # Cada segmento se define por su posición de inicio y fin en la dimensión de columnas.
@@ -119,7 +124,25 @@ def evaluar_imagen_completa(data, segment_width=88, stride=88):
                 current_start, current_end = seg_start, seg_end
         merged_segments.append((current_start, current_end))
 
-    print("Segmentos de detección:", merged_segments)
     prediction_array = np.array(predictions)
     probability_array = np.array(probabilities)
-    return merged_segments
+    df_mapa = st.session_state["df_mapa"]
+    # unicamente se toman las columnas ID, Latitud, NS, Longitud, EW
+    df_mapa = df_mapa[['ID', 'Latitud', 'NS', 'Longitud', 'EW']]
+    df_mapa['ID'] = df_mapa['ID'].astype(int)/44
+    df_mapa['ID'] = df_mapa['ID'].astype(int)
+    # Se eliminan duplicados de id
+    df_mapa = df_mapa.drop_duplicates(subset='ID')
+    print(df_mapa)
+    # Crea un DataFrame con las predicciones y probabilidades y todos los segmentos detectados
+    df = pd.DataFrame({
+        "Segmento": list(range(n_segments)),
+        "Predicción": prediction_array,
+        "Probabilidad no asbesto": probability_array[:, 0],
+        "Probabilidad presencia de asbesto": probability_array[:, 1]
+    })
+    # Se añaden las columnas de df_mapa a df por medio de id y segmento
+    df['ID'] = df['Segmento']
+    df = df.merge(df_mapa, on='ID', how='left')
+    df = df.drop(columns=['ID'])
+    return merged_segments, df

@@ -70,6 +70,8 @@ if st.session_state["rad"] and st.session_state["rd7"]:
             st.session_state['direccion_rd7'] = rd7_path
 
     with st.spinner('Cargando radagrama...'):
+        data_raw = readMALA(rd7_path, rad_path)
+        st.session_state['data_raw'] = data_raw
         mostrar_radagrama(rd7_path, rad_path)
 
 # Mostrar el mapa si el archivo .cor está disponible
@@ -85,6 +87,7 @@ if st.session_state["mapa"]:
 
     with st.spinner('Cargando mapa...'):
         df_map = leer_archivo_cor(mapa_path)
+        st.session_state['df_mapa'] = df_map
         folium_map = mostrar_mapa(df_map)
         st.session_state['direccion_mapa'] = mapa_path
         # Mostrar el mapa interactivo usando streamlit-folium
