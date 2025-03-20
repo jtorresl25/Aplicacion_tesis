@@ -4,8 +4,6 @@ from scripts.rad import *
 import tempfile
 from streamlit_folium import st_folium
 import streamlit as st
-import torch
-print(torch.__version__)
 
 # Rutas predefinidas para los archivos de demo
 path_rad = "statics/DAT_0020_1.rad"
