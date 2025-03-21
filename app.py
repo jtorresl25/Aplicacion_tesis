@@ -9,6 +9,10 @@ import streamlit as st
 path_rad = "statics/DAT_0020_1.rad"
 path_rd7 = "statics/DAT_0020_1.rd7"
 path_mapa = "statics/DAT_0020_1.cor"
+# Rutas predefinidas para los archivos de demo
+path_rad_none = "statics/DAT_0017_1.rad"
+path_rd7_none = "statics/DAT_0017_1.rd7"
+path_mapa_none = "statics/DAT_0017_1.cor"
 
 # Inicializar estado de sesión para los archivos
 if "rad" not in st.session_state:
@@ -29,11 +33,18 @@ pasos("2. Cargue el archivo de la imagen .rd7")
 pasos("3. Cargue el archivo .cor")
 
 # Botón para cargar demo
-if st.button("Cargar Demo"):
+if st.button("Cargar Demo asbesto", key="Demo_asbesto"):
 
     st.session_state["rad"] = path_rad
     st.session_state["rd7"] = path_rd7
     st.session_state["mapa"] = path_mapa
+
+# Botón para cargar demo sin asbesto
+if st.button("Cargar Demo sin asbesto", key="Demo_sin_asbesto"):
+
+    st.session_state["rad"] = path_rad_none
+    st.session_state["rd7"] = path_rd7_none
+    st.session_state["mapa"] = path_mapa_none
 
 # Espacios para cargar manualmente los archivos
 rad = st.file_uploader("Cargar archivo .rad", type=["rad"])

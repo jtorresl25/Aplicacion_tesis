@@ -30,7 +30,8 @@ if df is not None:
     )
 st.text("")
 st.text("🔴 Los segmentos coloreados en rojo representan que el modelo ha detectato asbesto")
-st.text(" en esa zona con mas de un 70% de confianza.")
+st.text(
+    f'en esa zona con mas de un {st.session_state["numero"]}% de confianza.')
 st.text("")
 st.text("⚫ Las lineas de color negro representan la profundidad de la detección.")
 st.text("")
