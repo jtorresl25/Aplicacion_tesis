@@ -4,9 +4,11 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 
+name_modelo = "85[[35  4]  [ 7 32]].pth"
 
-class SimpleCNN(nn.Module):
-    def __init__(self, dropout_rate=0.5):
+
+class ImprovedCNN(nn.Module):
+    def __init__(self, dropout_rate=0.7):
         super().__init__()
         self.conv = nn.Sequential(
             nn.Conv2d(1, 16, kernel_size=3, padding=1),
@@ -22,6 +24,7 @@ class SimpleCNN(nn.Module):
             nn.Conv2d(32, 64, kernel_size=3, padding=1),
             nn.BatchNorm2d(64),
             nn.ReLU(),
+
             nn.AdaptiveAvgPool2d((2, 2)),
         )
         self.fc = nn.Sequential(
@@ -38,9 +41,9 @@ class SimpleCNN(nn.Module):
 
 
 def load_model():
-    model = SimpleCNN()
+    model = ImprovedCNN()
     model.load_state_dict(torch.load(
-        "85_1m.pth", map_location="cpu"))
+        name_modelo, map_location="cpu"))
     model.eval()  # Modo evaluación
     return model
 
@@ -93,7 +96,8 @@ def evaluar_imagen_completa(data, segment_width=44, stride=44):
         # predictions.append(pred.item())
         # probabilities.append(prob.numpy()[0])
         # Si la probabilidad de la clase 1 es mayor a 0.7, se considera detección
-        if prob[0, 1] > 0.7:
+        if prob[0, 1] > int(st.session_state["numero"]) / 100:
+            print(int(st.session_state["numero"]) / 100)
             predictions.append(1)
         else:
             predictions.append(0)
@@ -133,7 +137,6 @@ def evaluar_imagen_completa(data, segment_width=44, stride=44):
     df_mapa['ID'] = df_mapa['ID'].astype(int)
     # Se eliminan duplicados de id
     df_mapa = df_mapa.drop_duplicates(subset='ID')
-    print(df_mapa)
     # Crea un DataFrame con las predicciones y probabilidades y todos los segmentos detectados
     df = pd.DataFrame({
         "Segmento": list(range(n_segments)),

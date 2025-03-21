@@ -51,50 +51,40 @@ def readGPRhdr(filename):
 
 
 def mostrar_radagrama(file_name, file_name_rad):
-    xrng = 10
-    yrng = 20
+    yrng = 25
     contrast = 3.0
-    # colores utiles HSV, gray
     color = "gray"
     data_raw = readMALA(file_name, file_name_rad)
     st.session_state['data_raw'] = data_raw
     data = data_raw[0]
-    # twtt es un array que representa el tiempo en un rango de 0 a y nanosegundos en n "segmentos".
-    # Ej: empieza desde cero, aumentando en 0.1955 unidades hasta los 197.65 nanosegundos repartidos en 1012 samples
+
     twtt = np.linspace(
         0, float(data_raw[1]["TIMEWINDOW"]), int(data_raw[1]['SAMPLES']))
-    # profilePos es un array que representa la distancia en un rango de 0 a x metros de longitud en n "segmentos".
-    # Ej: empieza desde cero, aumentando en 0.049 unidades hasta los 87.401 metros repartidos en 1784 segmentos
-    profilePos = float(data_raw[1]["DISTANCE INTERVAL"]
-                       )*np.arange(0, data.shape[1])
-    # Intervalo de distancia (eje x):
-    dx = profilePos[3]-profilePos[2]
-    # Intervalo de tiempos (eje y)
-    dt = twtt[3]-twtt[2]
+
+    # Modificación aquí: calcular profilePos como número_de_columna / 44
+    profilePos = np.arange(data.shape[1]) / 44.0  # Cambio clave
+
+    dx = profilePos[3] - profilePos[2]  # Ahora dx = 1/44.0
+    dt = twtt[3] - twtt[2]
 
     stdcont = np.nanmax(np.abs(data)[:])
-    # Crear la figura y los ejes
     fig, ax = plt.subplots()
 
-    # Mostrar la imagen en los ejes (ax) con los parámetros adecuados
-    img = ax.imshow(data, cmap=color, extent=[min(profilePos) - dx/2.0,
-                                              max(profilePos) + dx/2.0,
-                                              max(twtt) + dt/2.0,
-                                              min(twtt) - dt/2.0],
-                    aspect="auto", vmin=-stdcont/contrast, vmax=stdcont/contrast)
+    # Extent ajustado automáticamente según el nuevo profilePos
+    img = ax.imshow(data, cmap=color,
+                    extent=[profilePos[0] - dx/2.0,   # Inicio del eje x
+                            profilePos[-1] + dx/2.0,  # Fin del eje x
+                            max(twtt) + dt/2.0,
+                            min(twtt) - dt/2.0],
+                    aspect="auto",
+                    vmin=-stdcont/contrast,
+                    vmax=stdcont/contrast)
 
-    # Etiquetas de los ejes
     ax.set_ylabel("Tiempo [ns]")
     ax.set_xlabel("Posición del perfil [m]")
-    ax.xaxis.tick_top()  # Mover los ticks del eje X a la parte superior
-    # Colocar la etiqueta del eje X en la parte superior
+    ax.xaxis.tick_top()
     ax.xaxis.set_label_position('top')
-
-    # Definir límites
     ax.set_ylim(yrng)
-    ax.set_xlim(xrng)
-
-    # Mostrar la figura en Streamlit
     st.pyplot(fig)
 
 

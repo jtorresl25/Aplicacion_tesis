@@ -48,6 +48,10 @@ if rd7 is not None:
 if mapa is not None:
     st.session_state["mapa"] = mapa
 
+# Input para ingresar numero
+st.session_state["numero"] = st.number_input(
+    "Ingrese el margen de certeza que desea tener del modelo", min_value=0, max_value=100, value=50)
+
 # Botón para analizar los archivos
 if st.button("Analizar", key="Analizar") and st.session_state["rad"] and st.session_state["rd7"]:
     st.switch_page("pages/resultados.py")
