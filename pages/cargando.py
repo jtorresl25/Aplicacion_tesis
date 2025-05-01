@@ -12,10 +12,23 @@ st.markdown(
 )
 
 
-# Array de mensajes a mostrar
-mensajes = ["Desempaquetando la compañia...", "Olfateando buenas practicas...",
-            "Mordiendo las malas practicas...", "Tomando una siestica...", "Calculando la sostenibilidad..."]
-cargando = ["🐾", "🐾🐾", "🐾🐾🐾", "🐾🐾🐾🐾", "🐾🐾🐾🐾🐾"]
+# Mensajes para mostrar durante la ejecución del modelo
+mensajes = [
+    "Analizando señales subterráneas...",
+    "Detallando trazas de asbesto...",
+    "Refinando el mapa de subsuelo...",
+    "Optimizando la detección con IA...",
+    "Validando resultados finales..."
+]
+
+# Indicador de progreso con lupas
+cargando = [
+    "🔍",
+    "📡🔍",
+    "🔍🔬🔍",
+    "📡🔍🔍🔬",
+    "🔍🔍🔬🔍🔍"
+]
 
 # Función para actualizar los mensajes en paralelo
 
