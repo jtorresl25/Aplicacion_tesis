@@ -65,7 +65,7 @@ st.session_state["numero"] = st.number_input(
 
 # Botón para analizar los archivos
 if st.button("Analizar", key="Analizar") and st.session_state["rad"] and st.session_state["rd7"]:
-    st.switch_page("pages/resultados.py")
+    st.switch_page("pages/cargando.py")
 
 # Mostrar el radagrama si los archivos .rad y .rd7 están disponibles
 if st.session_state["rad"] and st.session_state["rd7"]:

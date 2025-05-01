@@ -5,8 +5,7 @@ from scripts.evalue import *
 from io import BytesIO
 
 
-segmentos_detecciones, df = evaluar_imagen_completa(
-    st.session_state['data_raw'])
+segmentos_detecciones, df = st.session_state['segmentos_detecciones'], st.session_state['df']
 
 style()
 
