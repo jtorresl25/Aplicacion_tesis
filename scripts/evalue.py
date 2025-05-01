@@ -114,8 +114,8 @@ def evaluar_imagen_completa(data, df_mapa, segment_width=44*2, stride=44*2, mc_i
         df_map, left_on='Segmento', right_on='ID', how='left').drop(columns=['ID'])
 
     merged_segments = [
-        ((row.Segmento)*stride, (row.Segmento)*stride+segment_width)
-        for _, row in df_stats[df_stats.Predicción_confianza == 1].iterrows()
+        (int((row.Segmento)*stride), int((row.Segmento)*stride+segment_width))
+        for _, row in df_stats[df_stats.MC_Mean_asb > 0.5].iterrows()
     ]
 
     return merged_segments, df_final
