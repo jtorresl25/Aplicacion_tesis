@@ -3,8 +3,10 @@ import torch.nn as nn
 import numpy as np
 import pandas as pd
 import streamlit as st
+from torchvision import models
 
-name_modelo = "best_model.pth"
+name_modelo = "92 [[54  0]  [ 5  6]].pth"
+n_metros = 3
 
 
 class ImprovedCNN(nn.Module):
@@ -15,13 +17,16 @@ class ImprovedCNN(nn.Module):
             nn.BatchNorm2d(16),
             nn.ReLU(),
             nn.MaxPool2d(2),
+
             nn.Conv2d(16, 32, kernel_size=3, padding=1),
             nn.BatchNorm2d(32),
             nn.ReLU(),
             nn.MaxPool2d(2),
+
             nn.Conv2d(32, 64, kernel_size=3, padding=1),
             nn.BatchNorm2d(64),
             nn.ReLU(),
+
             nn.AdaptiveAvgPool2d((2, 2)),
         )
         self.fc = nn.Sequential(
@@ -46,7 +51,7 @@ model = load_model()
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
-def evaluar_imagen_completa(data, df_mapa, segment_width=44*2, stride=44*2, mc_iterations=50):
+def evaluar_imagen_completa(data, df_mapa, segment_width=44*n_metros, stride=44*n_metros, mc_iterations=25):
     # Preprocesamiento
     arr = data[0]
     df_img = pd.DataFrame(arr)
@@ -59,6 +64,8 @@ def evaluar_imagen_completa(data, df_mapa, segment_width=44*2, stride=44*2, mc_i
     stats = []
     # Modo inferencia con dropout
     model.train()
+
+    df_distribucion = pd.DataFrame()
     for j in range(n_segments):
         start, end = j * stride, j * stride + segment_width
         seg = img[:, :, :, start:end]
@@ -103,7 +110,13 @@ def evaluar_imagen_completa(data, df_mapa, segment_width=44*2, stride=44*2, mc_i
             'MC_P2.5_asb': p025[1],
             'MC_P97.5_asb': p975[1],
         })
+        df_mc = pd.DataFrame(mc)
+        # se crea una columna llamada segmento
+        df_mc['Segmento'] = j
+        df_distribucion = pd.concat(
+            [df_distribucion, df_mc], axis=0)
 
+    print(df_distribucion)
     model.eval()
     # Construir df y merged_segments con solo confianza == 1
     df_stats = pd.DataFrame(stats)
@@ -118,4 +131,4 @@ def evaluar_imagen_completa(data, df_mapa, segment_width=44*2, stride=44*2, mc_i
         for _, row in df_stats[df_stats.MC_Mean_asb > 0.5].iterrows()
     ]
 
-    return merged_segments, df_final
+    return merged_segments, df_final, df_distribucion

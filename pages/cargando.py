@@ -6,7 +6,7 @@ import threading
 
 st.markdown(
     f"""
-        <h1 style="text-align: center; padding-top: 0; font-size:40px;">Analizando la sostenibilidad</h1>
+        <h1 style="text-align: center; padding-top: 0; font-size:40px;">Analizando las muestras</h1>
         """,
     unsafe_allow_html=True
 )
@@ -76,9 +76,8 @@ df_mapa = st.session_state['df_mapa'][[
 def ejecutar_proceso():
     global segmentos_detecciones
     global df
-    global segmentos_detecciones
-    global df
-    segmentos_detecciones, df = evaluar_imagen_completa(
+    global df_distribución
+    segmentos_detecciones, df, df_distribución = evaluar_imagen_completa(
         data, df_mapa)
     print("Segmentos detectados: ", segmentos_detecciones)
     proceso_terminado.set()  # Indica que el proceso ha terminado
@@ -106,5 +105,6 @@ if segmentos_detecciones == "error":
 else:
     st.session_state['segmentos_detecciones'] = segmentos_detecciones
     st.session_state['df'] = df
+    st.session_state['df_distribución'] = df_distribución
 
     st.switch_page("pages/resultados.py")

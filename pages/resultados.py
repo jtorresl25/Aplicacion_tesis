@@ -5,7 +5,8 @@ from scripts.evalue import *
 from io import BytesIO
 
 
-segmentos_detecciones, df = st.session_state['segmentos_detecciones'], st.session_state['df']
+segmentos_detecciones, df, df_distribución = st.session_state[
+    'segmentos_detecciones'], st.session_state['df'], st.session_state['df_distribución']
 
 style()
 
@@ -23,6 +24,16 @@ if df is not None:
     excel_buffer.seek(0)
     st.download_button(
         label="📥 Descargar datos en Excel",
+        data=excel_buffer,
+        file_name="resultados_analisis.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+if df_distribución is not None:
+    excel_buffer = BytesIO()
+    df_distribución.to_excel(excel_buffer, index=False, engine='openpyxl')
+    excel_buffer.seek(0)
+    st.download_button(
+        label="📥 Descargar distribución",
         data=excel_buffer,
         file_name="resultados_analisis.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
