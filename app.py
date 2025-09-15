@@ -59,9 +59,21 @@ if rd7 is not None:
 if mapa is not None:
     st.session_state["mapa"] = mapa
 
-# Input para ingresar numero
-st.session_state["numero"] = st.number_input(
-    "Ingrese el margen de certeza que desea tener del modelo", min_value=0, max_value=100, value=50)
+# Velocidad de propagación
+st.session_state["velocidad"] = st.number_input(
+    "Ingrese la velocidad de propagación (m/ns)", min_value=0.0, value=0.1889)
+
+# Input para ingresar profundidad
+st.session_state["profundidad"] = st.number_input(
+    "Ingrese la profundidad de la capa (cm)", min_value=0, value=50)
+
+# Input para ingresar el grosor de la capa
+st.session_state["grosor"] = st.number_input(
+    "Ingrese el grosor de la capa (cm)", min_value=0, value=50)
+
+# Input setear el valor de 0 en el radagrama
+st.session_state["cero"] = st.number_input(
+    "Ingrese el valor de 0 en el radagrama (ns)", min_value=0, value=7)
 
 # Botón para analizar los archivos
 if st.button("Analizar", key="Analizar") and st.session_state["rad"] and st.session_state["rd7"]:
@@ -87,7 +99,8 @@ if st.session_state["rad"] and st.session_state["rd7"]:
     with st.spinner('Cargando radagrama...'):
         data_raw = readMALA(rd7_path, rad_path)
         st.session_state['data_raw'] = data_raw
-        mostrar_radagrama(rd7_path, rad_path)
+        mostrar_radagrama(
+            rd7_path, rad_path, st.session_state["profundidad"], st.session_state["grosor"], st.session_state["velocidad"], st.session_state["cero"])
 
 # Mostrar el mapa si el archivo .cor está disponible
 if st.session_state["mapa"]:
