@@ -59,21 +59,58 @@ if rd7 is not None:
 if mapa is not None:
     st.session_state["mapa"] = mapa
 
-# Velocidad de propagación
-st.session_state["velocidad"] = st.number_input(
-    "Ingrese la velocidad de propagación (m/ns)", min_value=0.0, value=0.1889)
+col1, col2, col3, col4 = st.columns(4)
+with col1:
+    cero = st.number_input(
+        "Cero (ns)", min_value=0.0, value=7.0, step=0.5, key="cero")
+with col2:
+    profundidad = st.number_input(
+        "Profundidad (cm)", min_value=0.0, value=20.0, step=1.0, key="profundidad")
+with col3:
+    grosor = st.number_input(
+        "Grosor (cm)", min_value=0.0, value=10.0, step=1.0, key="grosor")
+with col4:
+    velocidad = st.number_input(
+        "Velocidad (m/ns)", min_value=0.05, max_value=0.40, value=0.1889, step=0.001, key="velocidad")
 
-# Input para ingresar profundidad
-st.session_state["profundidad"] = st.number_input(
-    "Ingrese la profundidad de la capa (cm)", min_value=0, value=50)
+# ====== Controles extra de visualización ======
+st.subheader("Ajustes de visualización")
 
-# Input para ingresar el grosor de la capa
-st.session_state["grosor"] = st.number_input(
-    "Ingrese el grosor de la capa (cm)", min_value=0, value=50)
+cmap = st.selectbox(
+    "Colormap",
+    ["gray", "seismic", "RdBu_r", "viridis",
+        "plasma", "inferno", "magma", "cividis"],
+    index=0, key="viz_cmap"
+)
 
-# Input setear el valor de 0 en el radagrama
-st.session_state["cero"] = st.number_input(
-    "Ingrese el valor de 0 en el radagrama (ns)", min_value=0, value=7)
+intensity_mode = st.radio(
+    "Modo de intensidad",
+    ["Contraste (±σ/contraste)", "Percentiles"],
+    index=0, horizontal=True, key="viz_int_mode"
+)
+
+if intensity_mode == "Contraste (±σ/contraste)":
+    contrast = st.slider("Contraste (mayor = menos saturado)",
+                         1.0, 10.0, 3.0, 0.5, key="viz_contrast")
+    pmin = pmax = None
+else:
+    pmin = st.slider("Percentil mínimo", 0.0, 20.0, 2.0, 0.5, key="viz_pmin")
+    pmax = st.slider("Percentil máximo", 80.0, 100.0,
+                     98.0, 0.5, key="viz_pmax")
+    contrast = None
+
+st.markdown("**Filtros (opcional)**")
+use_bg = st.checkbox(
+    "Background removal (restar traza media)", value=True, key="viz_bg")
+dewow_ns = st.slider("Dewow (ventana ns)", 0.0, 50.0,
+                     10.0, 1.0, key="viz_dewow")
+agc_ns = st.slider("AGC (ventana ns)", 0.0, 200.0, 0.0, 5.0, key="viz_agc")
+gauss_sigma = st.slider("Suavizado Gaussiano σ", 0.0,
+                        3.0, 0.0, 0.1, key="viz_gauss")
+unsharp_sigma = st.slider("Unsharp σ", 0.0, 3.0, 0.0,
+                          0.1, key="viz_unsharp_sigma")
+unsharp_amount = st.slider("Unsharp amount", 0.0, 2.0,
+                           0.0, 0.1, key="viz_unsharp_amount")
 
 # Botón para analizar los archivos
 if st.button("Analizar", key="Analizar") and st.session_state["rad"] and st.session_state["rd7"]:
@@ -100,7 +137,14 @@ if st.session_state["rad"] and st.session_state["rd7"]:
         data_raw = readMALA(rd7_path, rad_path)
         st.session_state['data_raw'] = data_raw
         mostrar_radagrama(
-            rd7_path, rad_path, st.session_state["profundidad"], st.session_state["grosor"], st.session_state["velocidad"], st.session_state["cero"])
+            rd7_path, rad_path,
+            profundidad, grosor, velocidad, cero,
+            # nuevos params:
+            cmap=cmap, intensity_mode=intensity_mode, contrast=contrast,
+            pmin=pmin, pmax=pmax,
+            use_bg=use_bg, dewow_ns=dewow_ns, agc_ns=agc_ns,
+            gauss_sigma=gauss_sigma, unsharp_sigma=unsharp_sigma, unsharp_amount=unsharp_amount
+        )
 
 # Mostrar el mapa si el archivo .cor está disponible
 if st.session_state["mapa"]:
