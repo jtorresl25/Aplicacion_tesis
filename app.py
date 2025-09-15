@@ -73,44 +73,82 @@ with col4:
     velocidad = st.number_input(
         "Velocidad (m/ns)", min_value=0.05, max_value=0.40, value=0.1889, step=0.001, key="velocidad")
 
-# ====== Controles extra de visualización ======
-st.subheader("Ajustes de visualización")
+# ====== Controles extra de visualización (compacto, plegable y con tooltips) ======
+with st.expander("Ajustes de visualización", expanded=False):
+    # --- Fila 1: Colormap + Modo de intensidad ---
+    c1, c2 = st.columns([1, 1])
+    with c1:
+        cmap = st.selectbox(
+            "Colormap",
+            ["gray", "seismic", "RdBu_r", "viridis",
+                "plasma", "inferno", "magma", "cividis"],
+            index=0, key="viz_cmap",
+            help="Paleta de colores para representar el radargrama. No altera los datos; solo su apariencia. "
+                 "‘gray’ es el estándar; ‘seismic’/‘RdBu_r’ resaltan la polaridad."
+        )
+    with c2:
+        intensity_mode = st.radio(
+            "Intensidad",
+            ["Contraste (±σ/contraste)", "Percentiles"],
+            index=0, horizontal=True, key="viz_int_mode",
+            help="Elige cómo escalar la amplitud de la imagen. "
+                 "• Contraste: usa un rango simétrico ±(σ/contraste). "
+                 "• Percentiles: recorta extremos (robusto a outliers)."
+        )
 
-cmap = st.selectbox(
-    "Colormap",
-    ["gray", "seismic", "RdBu_r", "viridis",
-        "plasma", "inferno", "magma", "cividis"],
-    index=0, key="viz_cmap"
-)
-
-intensity_mode = st.radio(
-    "Modo de intensidad",
-    ["Contraste (±σ/contraste)", "Percentiles"],
-    index=0, horizontal=True, key="viz_int_mode"
-)
-
-if intensity_mode == "Contraste (±σ/contraste)":
-    contrast = st.slider("Contraste (mayor = menos saturado)",
-                         1.0, 10.0, 3.0, 0.5, key="viz_contrast")
+    # --- Fila 2: Control de intensidad (compacto) ---
     pmin = pmax = None
-else:
-    pmin = st.slider("Percentil mínimo", 0.0, 20.0, 2.0, 0.5, key="viz_pmin")
-    pmax = st.slider("Percentil máximo", 80.0, 100.0,
-                     98.0, 0.5, key="viz_pmax")
     contrast = None
+    if intensity_mode == "Contraste (±σ/contraste)":
+        contrast = st.slider(
+            "Contraste", 1.0, 10.0, 3.0, 0.5, key="viz_contrast",
+            help="Escala de intensidad: vmin/vmax = ±(σ/contraste). "
+                 "Valores mayores => rango más amplio (menos saturación); "
+                 "valores menores => más contraste (posible saturación)."
+        )
+    else:
+        pmin, pmax = st.slider(
+            "Percentiles [min, max]", 0.0, 100.0, (2.0, 98.0), 0.5, key="viz_prange",
+            help="Define el rango dinámico recortando valores extremos. "
+                 "Útil para mejorar contraste cuando hay outliers."
+        )
 
-st.markdown("**Filtros (opcional)**")
-use_bg = st.checkbox(
-    "Background removal (restar traza media)", value=True, key="viz_bg")
-dewow_ns = st.slider("Dewow (ventana ns)", 0.0, 50.0,
-                     10.0, 1.0, key="viz_dewow")
-agc_ns = st.slider("AGC (ventana ns)", 0.0, 200.0, 0.0, 5.0, key="viz_agc")
-gauss_sigma = st.slider("Suavizado Gaussiano σ", 0.0,
-                        3.0, 0.0, 0.1, key="viz_gauss")
-unsharp_sigma = st.slider("Unsharp σ", 0.0, 3.0, 0.0,
-                          0.1, key="viz_unsharp_sigma")
-unsharp_amount = st.slider("Unsharp amount", 0.0, 2.0,
-                           0.0, 0.1, key="viz_unsharp_amount")
+    st.markdown("**Filtros**")
+
+    # --- Fila 3: Filtros (3 columnas) ---
+    f1, f2, f3 = st.columns(3)
+    with f1:
+        use_bg = st.checkbox(
+            "Background removal", value=True, key="viz_bg",
+            help="Resta la traza media (promedio en columnas) para eliminar componente DC y horizontales "
+                 "muy persistentes (baseline)."
+        )
+        dewow_ns = st.slider(
+            "Dewow (ns)", 0.0, 50.0, 10.0, 1.0, key="viz_dewow",
+            help="Filtro pasa-altos suave en el tiempo (media móvil). "
+                 "Reduce bajas frecuencias del baseline (‘wow’). 5–20 ns suele funcionar bien."
+        )
+    with f2:
+        agc_ns = st.slider(
+            "AGC (ns)", 0.0, 200.0, 0.0, 5.0, key="viz_agc",
+            help="Ganancia automática por ventana temporal (RMS). "
+                 "Compensa atenuación con la profundidad; puede ‘lavar’ amplitudes cercanas si es muy grande."
+        )
+        gauss_sigma = st.slider(
+            "Gauss σ", 0.0, 3.0, 0.0, 0.1, key="viz_gauss",
+            help="Suavizado gaussiano 2D (reduce ruido de alta frecuencia). "
+                 "Valores pequeños (0.3–1.0) limpian sin perder demasiados detalles."
+        )
+    with f3:
+        unsharp_sigma = st.slider(
+            "Unsharp σ", 0.0, 3.0, 0.0, 0.1, key="viz_unsharp_sigma",
+            help="Tamaño del desenfoque previo al realce (unsharp). "
+                 "Pequeño = bordes finos; grande = bordes más anchos."
+        )
+        unsharp_amount = st.slider(
+            "Unsharp amount", 0.0, 2.0, 0.0, 0.1, key="viz_unsharp_amount",
+            help="Intensidad del realce de bordes. 0.3–0.8 suele ser un buen punto de partida."
+        )
 
 # Botón para analizar los archivos
 if st.button("Analizar", key="Analizar") and st.session_state["rad"] and st.session_state["rd7"]:
