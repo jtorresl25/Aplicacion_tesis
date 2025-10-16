@@ -17,8 +17,32 @@ if st.button("Volver", key="Volver"):
     st.switch_page("app.py")
 
 h1("Resultados del análisis")
-# Botón para descargar Excel (Añadir este bloque)
-if df is not None:
+if df is not None and df_distribución is not None:
+    col1, col2 = st.columns(2)
+
+    with col1:
+        excel_buffer = BytesIO()
+        df.to_excel(excel_buffer, index=False, engine='openpyxl')
+        excel_buffer.seek(0)
+        st.download_button(
+            label="📥 Descargar datos en Excel",
+            data=excel_buffer,
+            file_name="resultados_analisis.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+
+    with col2:
+        excel_buffer2 = BytesIO()
+        df_distribución.to_excel(excel_buffer2, index=False, engine='openpyxl')
+        excel_buffer2.seek(0)
+        st.download_button(
+            label="📊 Descargar distribución",
+            data=excel_buffer2,
+            file_name="resultados_distribucion.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+
+elif df is not None:
     excel_buffer = BytesIO()
     df.to_excel(excel_buffer, index=False, engine='openpyxl')
     excel_buffer.seek(0)
@@ -28,36 +52,33 @@ if df is not None:
         file_name="resultados_analisis.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
-if df_distribución is not None:
-    excel_buffer = BytesIO()
-    df_distribución.to_excel(excel_buffer, index=False, engine='openpyxl')
-    excel_buffer.seek(0)
+
+elif df_distribución is not None:
+    excel_buffer2 = BytesIO()
+    df_distribución.to_excel(excel_buffer2, index=False, engine='openpyxl')
+    excel_buffer2.seek(0)
     st.download_button(
-        label="📥 Descargar distribución",
-        data=excel_buffer,
-        file_name="resultados_analisis.xlsx",
+        label="📊 Descargar distribución",
+        data=excel_buffer2,
+        file_name="resultados_distribucion.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
 st.text("")
-st.text("🔴 Los segmentos coloreados en rojo representan que el modelo ha detectato asbesto")
-st.text(
-    f'en esa zona con mas de un {st.session_state["numero"]}% de confianza.')
-st.text("")
-st.text("⚫ Las lineas de color negro representan la profundidad de la detección.")
-st.text("")
-st.text("⚪ Las lineas de color blanco representan el final de la capa de asbesto")
+st.text("🔴 Los segmentos coloreados en rojo representan que el modelo ha detectado asbesto en esas secciones")
+st.text("en esas secciones.")
 st.text("")
 
+# lineas_profundidad = [
+#     {'y': 10, 'color': 'Black', 'estilo': '-', 'grosor': 2},
+# ]
+
+# lineas_grosor = [
+#     {'x': 15, 'color': 'Blue', 'estilo': '-', 'grosor': 2},
+# ]
 lineas_profundidad = [
-    {'y': 10, 'color': 'Black', 'estilo': '-', 'grosor': 2},
-    {'y': 15, 'color': 'Black', 'estilo': '-', 'grosor': 2},
-    {'y': 10, 'color': 'Black', 'estilo': '-', 'grosor': 2},
 ]
 
 lineas_grosor = [
-    {'x': 15, 'color': 'Blue', 'estilo': '-', 'grosor': 2},
-    {'x': 17, 'color': 'Blue', 'estilo': '-', 'grosor': 2},
-    {'x': 15, 'color': 'Blue', 'estilo': '-', 'grosor': 2},
 ]
 
 mostrar_radagrama_detecciones(st.session_state['data_raw'],
@@ -74,6 +95,3 @@ if st.session_state["mapa"]:
     folium_map = mostrar_mapa(st.session_state["df_mapa"])
     # Mostrar el mapa interactivo usando streamlit-folium
     st_folium(folium_map, width=700, height=500)
-
-if st.button("Mas detalles", key="detalles"):
-    st.switch_page("pages/detalle.py")
